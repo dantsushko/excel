@@ -12,6 +12,7 @@ class CellStyle extends Equatable {
   Underline _underline = Underline.None;
   int? _fontSize;
   int _rotation = 0;
+  String? _numberFormat;
 
   CellStyle({
     String fontColorHex = 'FF000000',
@@ -25,6 +26,7 @@ class CellStyle extends Equatable {
     Underline underline = Underline.None,
     bool italic = false,
     int rotation = 0,
+    String? numberFormat,
   }) {
     _textWrapping = textWrapping;
 
@@ -45,6 +47,8 @@ class CellStyle extends Equatable {
     _verticalAlign = verticalAlign;
 
     _horizontalAlign = horizontalAlign;
+
+    _numberFormat = numberFormat;
   }
 
   CellStyle copyWith({
@@ -59,20 +63,21 @@ class CellStyle extends Equatable {
     Underline? underlineVal,
     int? fontSizeVal,
     int? rotationVal,
+    String? numberFormat,
   }) {
     return CellStyle(
-      fontColorHex: fontColorHexVal ?? this._fontColorHex,
-      backgroundColorHex: backgroundColorHexVal ?? this._backgroundColorHex,
-      fontFamily: fontFamilyVal ?? this._fontFamily,
-      horizontalAlign: horizontalAlignVal ?? this._horizontalAlign,
-      verticalAlign: verticalAlignVal ?? this._verticalAlign,
-      textWrapping: textWrappingVal ?? this._textWrapping,
-      bold: boldVal ?? this._bold,
-      italic: italicVal ?? this._italic,
-      underline: underlineVal ?? this._underline,
-      fontSize: fontSizeVal ?? this._fontSize,
-      rotation: rotationVal ?? this._rotation,
-    );
+        fontColorHex: fontColorHexVal ?? this._fontColorHex,
+        backgroundColorHex: backgroundColorHexVal ?? this._backgroundColorHex,
+        fontFamily: fontFamilyVal ?? this._fontFamily,
+        horizontalAlign: horizontalAlignVal ?? this._horizontalAlign,
+        verticalAlign: verticalAlignVal ?? this._verticalAlign,
+        textWrapping: textWrappingVal ?? this._textWrapping,
+        bold: boldVal ?? this._bold,
+        italic: italicVal ?? this._italic,
+        underline: underlineVal ?? this._underline,
+        fontSize: fontSizeVal ?? this._fontSize,
+        rotation: rotationVal ?? this._rotation,
+        numberFormat: numberFormat ?? this._numberFormat);
   }
 
   ///Get Font Color
@@ -215,6 +220,16 @@ class CellStyle extends Equatable {
     _italic = italic;
   }
 
+  ///Set `NumberFormat`
+  ///
+  set numberFormat(String numberFormat) {
+    _numberFormat = numberFormat;
+  }
+
+  String get numberFormat {
+    return _numberFormat ?? '';
+  }
+
   @override
   List<Object?> get props => [
         _bold,
@@ -228,5 +243,6 @@ class CellStyle extends Equatable {
         _horizontalAlign,
         _fontColorHex,
         _backgroundColorHex,
+        _numberFormat,
       ];
 }

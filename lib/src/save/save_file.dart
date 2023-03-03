@@ -27,7 +27,6 @@ class Save {
     if (_excel._rtlChanges) {
       _setRTL();
     }
-
     for (var xmlFile in _excel._xmlFiles.keys) {
       var xml = _excel._xmlFiles[xmlFile].toString();
       var content = utf8.encode(xml);
@@ -353,13 +352,30 @@ class Save {
     });
   }
 
-  /// Writing Font Color in [xl/styles.xml] from the Cells of the sheets.
+  XmlDocumentFragment _getNumberFormats(Set<_NumberFormat> formats) {
+    final builder = XmlBuilder();
+    final List<String> arrFormats = formats.map((e) => e.formatString).toList();
+    if (arrFormats.isNotEmpty) {
+      builder.element('numFmts', nest: () {
+        builder.attribute('count', arrFormats.length.toString());
+        for (int i = 0; i < arrFormats.length; i++) {
+          builder.element('numFmt', nest: () {
+            builder.attribute('numFmtId', i);
+            final String formatString = arrFormats[i].replaceAll("'", '"');
+            builder.attribute('formatCode', formatString);
+          });
+        }
+      });
+    }
+    return builder.buildFragment();
+  }
 
+  /// Writing Font Color in [xl/styles.xml] from the Cells of the sheets.
   _processStylesFile() {
     _innerCellStyle = <CellStyle>[];
     List<String> innerPatternFill = <String>[];
     List<_FontStyle> innerFontStyle = <_FontStyle>[];
-
+    Set<_NumberFormat> innerNumberFormats = <_NumberFormat>{};
     _excel._sheetMap.forEach((sheetName, sheetObject) {
       sheetObject._sheetData.forEach((_, colMap) {
         colMap.forEach((_, dataObject) {
@@ -387,6 +403,8 @@ class Save {
           _fontStyleIndex(innerFontStyle, _fs) == -1) {
         innerFontStyle.add(_fs);
       }
+      final _nf = _NumberFormat(cellStyle.numberFormat);
+      innerNumberFormats.add(_nf);
 
       /// Filling the inner usable extra list of backgroung color
       String backgroundColor = cellStyle.backgroundColor;
@@ -398,7 +416,9 @@ class Save {
 
     XmlElement fonts =
         _excel._xmlFiles['xl/styles.xml']!.findAllElements('fonts').first;
-
+    XmlElement styleSheet =
+        _excel._xmlFiles['xl/styles.xml']!.findAllElements('styleSheet').first;
+    styleSheet.children.insert(0, _getNumberFormats(innerNumberFormats));
     var fontAttribute = fonts.getAttributeNode('count');
     if (fontAttribute != null) {
       fontAttribute.value =
@@ -525,13 +545,15 @@ class Save {
       int backgroundIndex = innerPatternFill.indexOf(backgroundColor),
           fontIndex = _fontStyleIndex(innerFontStyle, _fs);
 
+      final _nf = _NumberFormat(cellStyle.numberFormat);
+      int numFormatIndex = innerNumberFormats.toList().indexOf(_nf);
       var attributes = <XmlAttribute>[
         XmlAttribute(XmlName('borderId'), '0'),
         XmlAttribute(XmlName('fillId'),
             '${backgroundIndex == -1 ? 0 : backgroundIndex + _excel._patternFill.length}'),
         XmlAttribute(XmlName('fontId'),
             '${fontIndex == -1 ? 0 : fontIndex + _excel._fontStyleList.length}'),
-        XmlAttribute(XmlName('numFmtId'), '0'),
+        XmlAttribute(XmlName('numFmtId'), '$numFormatIndex'),
         XmlAttribute(XmlName('xfId'), '0'),
       ];
 
