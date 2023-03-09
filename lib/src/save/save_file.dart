@@ -29,7 +29,11 @@ class Save {
     }
     for (var xmlFile in _excel._xmlFiles.keys) {
       var xml = _excel._xmlFiles[xmlFile].toString();
+      // File('$xmlFile')
+      //   ..createSync(recursive: true)
+      //   ..writeAsStringSync(xml);
       var content = utf8.encode(xml);
+
       _archiveFiles[xmlFile] = ArchiveFile(xmlFile, content.length, content);
     }
     return ZipEncoder().encode(_cloneArchive(_excel._archive));
@@ -176,32 +180,35 @@ class Save {
 
     List<double> colWidths = <double>[];
     int min = 0;
-
-    for (var index = 0; index < columnCount; index++) {
-      double value = _defaultColumnWidth;
-
-      if (autoFits.containsKey(index) &&
-          autoFits[index] == true &&
-          (!customWidths.containsKey(index) ||
-              customWidths[index] == _defaultColumnWidth)) {
-        value = _calcAutoFitColWidth(sheetObject, index);
-      } else {
-        if (customWidths.containsKey(index)) {
-          value = customWidths[index]!;
-        }
-      }
-
-      colWidths.add(value);
-
-      if (index != 0 && colWidths[index - 1] != value) {
-        _addNewCol(cols, min, index - 1, colWidths[index - 1]);
-        min = index;
-      }
-
-      if (index == (columnCount - 1)) {
-        _addNewCol(cols, index, index, value);
-      }
+    for(var index = 0; index < columnCount; index++){
+        _addNewCol(cols, index, index, customWidths[index - 1] ?? _defaultColumnWidth);
     }
+    ///TODO CHECK THIS LOGIC
+    // for (var index = 0; index < columnCount; index++) {
+    //   double value = _defaultColumnWidth;
+
+    //   if (autoFits.containsKey(index) &&
+    //       autoFits[index] == true &&
+    //       (!customWidths.containsKey(index) ||
+    //           customWidths[index] == _defaultColumnWidth)) {
+    //     value = _calcAutoFitColWidth(sheetObject, index);
+    //   } else {
+    //     if (customWidths.containsKey(index)) {
+    //       value = customWidths[index]!;
+    //     }
+    //   }
+
+    //   colWidths.add(value);
+
+    //   if (index != 0 && colWidths[index - 1] != value) {
+    //     _addNewCol(cols, min, index - 1, colWidths[index - 1]);
+    //     min = index;
+    //   }
+
+    //   if (index == (columnCount - 1)) {
+    //     _addNewCol(cols, index, index, value);
+    //   }
+    // }
   }
 
   void _addNewCol(XmlElement cols, int min, int max, double value) {
