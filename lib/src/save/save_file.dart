@@ -178,11 +178,14 @@ class Save {
 
     final columnCount = max(autoFits.length, customWidths.length);
 
-    List<double> colWidths = <double>[];
-    int min = 0;
-    for(var index = 0; index < columnCount; index++){
-        _addNewCol(cols, index, index, customWidths[index - 1] ?? _defaultColumnWidth);
+    // List<double> colWidths = <double>[];
+    // int min = 0;
+    for (var index = 0; index < columnCount; index++) {
+      if (customWidths[index] != null) {
+        _addNewCol(cols, index, index, customWidths[index]!);
+      }
     }
+
     ///TODO CHECK THIS LOGIC
     // for (var index = 0; index < columnCount; index++) {
     //   double value = _defaultColumnWidth;
@@ -377,6 +380,40 @@ class Save {
     return builder.buildFragment();
   }
 
+  XmlDocumentFragment _getBorder() {
+    final builder = XmlBuilder();
+
+    builder.element('borders', nest: () {
+      builder.attribute('count', 2);
+
+      builder.element('border', nest: () {
+        builder.element('left', nest: () {});
+        builder.element('right', nest: () {});
+        builder.element('top', nest: () {});
+        builder.element('bottom', nest: () {});
+        builder.element('diagonal', nest: () {});
+      });
+      builder.element('border', nest: () {
+        _serializeBorder(builder, 'left');
+        _serializeBorder(builder, 'right');
+        _serializeBorder(builder, 'top');
+        _serializeBorder(builder, 'bottom');
+      });
+    });
+
+    return builder.buildFragment();
+  }
+
+  /// Serialize borders.
+  void _serializeBorder(XmlBuilder builder, String borderType) {
+    builder.element(borderType, nest: () {
+      builder.attribute('style', 'thin');
+      builder.element('color', nest: () {
+        builder.attribute('rgb', 'FFcccccc');
+      });
+    });
+  }
+
   /// Writing Font Color in [xl/styles.xml] from the Cells of the sheets.
   _processStylesFile() {
     _innerCellStyle = <CellStyle>[];
@@ -426,6 +463,9 @@ class Save {
     XmlElement styleSheet =
         _excel._xmlFiles['xl/styles.xml']!.findAllElements('styleSheet').first;
     styleSheet.children.insert(0, _getNumberFormats(innerNumberFormats));
+
+   
+
     var fontAttribute = fonts.getAttributeNode('count');
     if (fontAttribute != null) {
       fontAttribute.value =
@@ -521,7 +561,9 @@ class Save {
                 "Corrupted Styles Found. Can't process further, Open up issue in github.");
       }
     });
-
+    var border = styleSheet.findAllElements('borders').first;
+    styleSheet.children.remove(border);
+    styleSheet.children.insert(3, _getBorder());
     XmlElement celx =
         _excel._xmlFiles['xl/styles.xml']!.findAllElements('cellXfs').first;
     var cellAttribute = celx.getAttributeNode('count');
@@ -555,7 +597,8 @@ class Save {
       final _nf = _NumberFormat(cellStyle.numberFormat);
       int numFormatIndex = innerNumberFormats.toList().indexOf(_nf);
       var attributes = <XmlAttribute>[
-        XmlAttribute(XmlName('borderId'), '0'),
+        XmlAttribute(XmlName('borderId'), '1'),
+        XmlAttribute(XmlName('applyBorder'), '1'),
         XmlAttribute(XmlName('fillId'),
             '${backgroundIndex == -1 ? 0 : backgroundIndex + _excel._patternFill.length}'),
         XmlAttribute(XmlName('fontId'),
