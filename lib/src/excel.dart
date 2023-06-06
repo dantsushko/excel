@@ -25,7 +25,7 @@ class Excel {
   late bool _colorChanges;
   late bool _mergeChanges;
   late bool _rtlChanges;
-
+  late bool _freezeChanges;
   late Archive _archive;
 
   late Map<String, XmlNode> _sheets;
@@ -38,6 +38,7 @@ class Excel {
   late List<String> _patternFill;
   late List<String> _mergeChangeLook;
   late List<String> _rtlChangeLook;
+  late List<String> _freezePaneLook;
   late List<_FontStyle> _fontStyleList;
   late List<int> _numFormats;
 
@@ -53,6 +54,7 @@ class Excel {
     _colorChanges = false;
     _mergeChanges = false;
     _rtlChanges = false;
+    _freezeChanges = false;
     _sheets = <String, XmlNode>{};
     _xmlFiles = <String, XmlDocument>{};
     _xmlSheetId = <String, String>{};
@@ -62,6 +64,7 @@ class Excel {
     _patternFill = <String>[];
     _mergeChangeLook = <String>[];
     _rtlChangeLook = <String>[];
+    _freezePaneLook = <String>[];
     _fontStyleList = <_FontStyle>[];
     _numFormats = <int>[];
     _stylesTarget = '';
@@ -234,6 +237,9 @@ class Excel {
     /// remove from `_rtlChangeLook`.
     if (_rtlChangeLook.contains(sheet)) {
       _rtlChangeLook.remove(sheet);
+    }
+    if (_freezePaneLook.contains(sheet)) {
+      _freezePaneLook.remove(sheet);
     }
 
     ///
@@ -579,7 +585,13 @@ class Excel {
   set _mergeChangeLookup(String value) {
     if (!_mergeChangeLook.contains(value)) {
       _mergeChangeLook.add(value);
-      //_mergeChanges = true;
+    }
+  }
+
+  set _freezePaneLookup(String value) {
+    if (!_freezePaneLook.contains(value)) {
+      _freezePaneLook.add(value);
+      _freezeChanges = true;
     }
   }
 

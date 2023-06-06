@@ -1,5 +1,6 @@
 library excel;
 
+import 'package:collection/collection.dart';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math';

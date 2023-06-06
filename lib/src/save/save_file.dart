@@ -27,6 +27,10 @@ class Save {
     if (_excel._rtlChanges) {
       _setRTL();
     }
+
+    // if(_excel._freezeChanges){
+    //   _setFreezePanes();
+    // }
     for (var xmlFile in _excel._xmlFiles.keys) {
       var xml = _excel._xmlFiles[xmlFile].toString();
       // File('$xmlFile')
@@ -121,8 +125,9 @@ class Save {
         if (value._sheetData[rowIndex] == null) {
           continue;
         }
-        var foundRow =
-            _createNewRow(_excel._sheets[sheet]! as XmlElement, rowIndex);
+        final rowHeights = _excel._sheetMap[sheet]?.getRowHeights.asMap();
+        var foundRow = _createNewRow(_excel._sheets[sheet]! as XmlElement,
+            rowIndex, rowHeights?[rowIndex]);
         for (var colIndex = 0; colIndex < value._maxCols; colIndex++) {
           var data = value._sheetData[rowIndex]![colIndex];
           if (data == null) {
@@ -236,59 +241,100 @@ class Save {
     return ((maxNumOfCharacters * 7.0 + 9.0) / 7.0 * 256).truncate() / 256;
   }
 
-  _setRTL() {
-    _excel._rtlChangeLook.forEach((s) {
+  static void _savePane(Sheet sheet, XmlBuilder builder) {
+    builder.element('pane', nest: () {
+      if (sheet._verticalSplit != 0) {
+        builder.attribute('xSplit', sheet._verticalSplit.toString());
+      }
+      if (sheet._horizontalSplit != 0) {
+        builder.attribute('ySplit', sheet._horizontalSplit.toString());
+      }
+      if (sheet._topLeftCell != '') {
+        builder.attribute('topLeftCell', sheet._topLeftCell);
+      }
+      // switch (sheet._activePane) {
+      //   case _ActivePane.bottomRight:
+      //     builder.attribute('activePane', 'bottomRight');
+      //     break;
+      //   case _ActivePane.bottomLeft:
+      //     builder.attribute('activePane', 'bottomLeft');
+      //     break;
+      //   case _ActivePane.topRight:
+      //     builder.attribute('activePane', 'topRight');
+      //     break;
+      //   case _ActivePane.topLeft:
+          builder.attribute('activePane', 'topLeft');
+          // break;
+      // }
+      builder.attribute('state', 'frozen');
+    });
+  }
+
+  _setFreezePanes() {
+    _excel._freezePaneLook.forEach((s) {
       var sheetObject = _excel._sheetMap[s];
-      if (sheetObject != null &&
-          _excel._xmlSheetId.containsKey(s) &&
-          _excel._xmlFiles.containsKey(_excel._xmlSheetId[s])) {
-        var itrSheetViewsRTLElement = _excel._xmlFiles[_excel._xmlSheetId[s]]
-            ?.findAllElements('sheetViews');
+      var xmlSheetId = _excel._xmlSheetId[s];
+      var xmlFile = _excel._xmlFiles[xmlSheetId];
+      if (sheetObject != null && xmlSheetId != null && xmlFile != null) {
+        var sheetViewsElement =
+            xmlFile.findAllElements('sheetViews').firstOrNull;
+        var builder = XmlBuilder();
 
-        if (itrSheetViewsRTLElement?.isNotEmpty ?? false) {
-          var itrSheetViewRTLElement = _excel._xmlFiles[_excel._xmlSheetId[s]]
-              ?.findAllElements('sheetView');
+        if (sheetViewsElement != null) {
+          builder.element('sheetViews', nest: () {
+            builder.element('sheetView', nest: () {
+              _savePane(sheetObject, builder);
+            });
+          });
 
-          if (itrSheetViewRTLElement?.isNotEmpty ?? false) {
-            /// clear all the children of the sheetViews here
-
-            _excel._xmlFiles[_excel._xmlSheetId[s]]
-                ?.findAllElements('sheetViews')
-                .first
-                .children
-                .clear();
-          }
-
-          _excel._xmlFiles[_excel._xmlSheetId[s]]
-              ?.findAllElements('sheetViews')
-              .first
-              .children
-              .add(XmlElement(
-                XmlName('sheetView'),
-                [
-                  if (sheetObject.isRTL)
-                    XmlAttribute(XmlName('rightToLeft'), '1'),
-                  XmlAttribute(XmlName('workbookViewId'), '0'),
-                ],
-              ));
-        } else {
-          _excel._xmlFiles[_excel._xmlSheetId[s]]
-              ?.findAllElements('worksheet')
-              .first
-              .children
-              .add(XmlElement(XmlName('sheetViews'), [], [
-                XmlElement(
-                  XmlName('sheetView'),
-                  [
-                    if (sheetObject.isRTL)
-                      XmlAttribute(XmlName('rightToLeft'), '1'),
-                    XmlAttribute(XmlName('workbookViewId'), '0'),
-                  ],
-                )
-              ]));
+          sheetViewsElement.children.clear();
+          sheetViewsElement.children.addAll(builder.buildFragment().children);
         }
       }
     });
+  }
+
+  void _setRTL() {
+    // _excel._rtlChangeLook.forEach((s) {
+    //   var sheetObject = _excel._sheetMap[s];
+    //   var xmlSheetId = _excel._xmlSheetId[s];
+    //   var xmlFile = _excel._xmlFiles[xmlSheetId];
+
+    //   if (sheetObject != null && xmlSheetId != null && xmlFile != null) {
+    //     var sheetViewsElement =
+    //         xmlFile.findAllElements('sheetViews').firstOrNull;
+    //     var builder = XmlBuilder();
+
+    //     if (sheetViewsElement != null) {
+    //       builder.element('sheetViews', nest: () {
+    //         builder.element('sheetView', nest: () {
+    //           if (sheetObject.isRTL) {
+    //             builder.attribute('rightToLeft', '1');
+    //           }
+    //           builder.attribute('workbookViewId', '0');
+    //         });
+    //       });
+
+    //       sheetViewsElement.children.clear();
+    //       sheetViewsElement.children.addAll(builder.buildFragment().children);
+    //     } else {
+    //       var worksheetElement =
+    //           xmlFile.findAllElements('worksheet').firstOrNull;
+    //       builder.element('sheetViews', nest: () {
+    //         builder.element('sheetView', nest: () {
+    //           if (sheetObject.isRTL) {
+    //             builder.attribute('rightToLeft', '1');
+    //           }
+    //           builder.attribute('workbookViewId', '0');
+    //         });
+    //       });
+
+    //       if (worksheetElement != null) {
+    //         worksheetElement.children.add(builder.buildFragment());
+    //       }
+    //     }
+    //   }
+    // });
   }
 
   /// Writing the merged cells information into the excel properties files.
@@ -463,8 +509,6 @@ class Save {
     XmlElement styleSheet =
         _excel._xmlFiles['xl/styles.xml']!.findAllElements('styleSheet').first;
     styleSheet.children.insert(0, _getNumberFormats(innerNumberFormats));
-
-   
 
     var fontAttribute = fonts.getAttributeNode('count');
     if (fontAttribute != null) {
@@ -730,9 +774,13 @@ class Save {
   }*/
 
   ///
-  XmlElement _createNewRow(XmlElement table, int rowIndex) {
+  XmlElement _createNewRow(XmlElement table, int rowIndex, double? rowHeight) {
     var row = XmlElement(XmlName('row'),
         [XmlAttribute(XmlName('r'), (rowIndex + 1).toString())], []);
+    if (rowHeight != 0) {
+      row.setAttribute('ht', rowHeight.toString());
+      row.setAttribute('customHeight', '1');
+    }
     table.children.add(row);
     return row;
   }

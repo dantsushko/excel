@@ -7,11 +7,18 @@ class Sheet {
   late int _maxRows;
   late int _maxCols;
   List<double> _colWidth = <double>[];
+  List<double> _rowHeight = <double>[];
   List<bool> _colAutoFit = <bool>[];
   late FastList<String> _spannedItems;
   late List<_Span?> _spanList;
   late Map<int, Map<int, Data>> _sheetData;
   late HeaderFooter? _headerFooter;
+
+  var _verticalSplit;
+
+  var _horizontalSplit;
+
+  var _topLeftCell;
 
   ///
   /// It will clone the object by changing the `this` reference of previous oldSheetObject and putting `new this` reference, with copying the values too
@@ -680,6 +687,30 @@ class Sheet {
     }
   }
 
+  freeze(
+    CellIndex start,
+    CellIndex end,
+  ) {
+    _excel._freezePaneLookup = sheetName;
+    int startColumn = start._columnIndex,
+        startRow = start._rowIndex,
+        endColumn = end._columnIndex,
+        endRow = end._rowIndex;
+
+    _checkMaxCol(startColumn);
+    _checkMaxCol(endColumn);
+    _checkMaxRow(startRow);
+    _checkMaxRow(endRow);
+    _verticalSplit = startColumn;
+    _horizontalSplit = startRow;
+    _topLeftCell = start.cellId;
+
+    print('_verticalSplit: $_verticalSplit _horizontalSplit: $_horizontalSplit '
+        '_topLeftCell: $_topLeftCell');
+
+    _excel._freezePaneLookup = sheetName;
+  }
+
   ///
   /// Merges the cells starting from `start` to `end`.
   ///
@@ -1005,6 +1036,10 @@ class Sheet {
     return _colAutoFit;
   }
 
+  List<double> get getRowHeights {
+    return _rowHeight;
+  }
+
   ///
   /// returns list of custom width columns
   ///
@@ -1038,6 +1073,16 @@ class Sheet {
       _colAutoFit.add(false);
     }
     _colAutoFit[colIndex] = true;
+  }
+
+  void setRowHeight(int rowIndex, double rowHeight) {
+    _checkMaxRow(rowIndex);
+    if (rowHeight < 0) return;
+
+    while (rowIndex >= _rowHeight.length) {
+      _rowHeight.add(_defaultRowHeight);
+    }
+    _rowHeight[rowIndex] = rowHeight;
   }
 
   ///

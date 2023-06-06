@@ -15,3 +15,5 @@ const _relationships =
 const _spreasheetXlsx = 'xlsx';
 
 const _defaultColumnWidth = 14.75;
+
+const _defaultRowHeight = 12.0;
