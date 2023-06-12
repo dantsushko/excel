@@ -28,9 +28,9 @@ class Save {
       _setRTL();
     }
 
-    // if(_excel._freezeChanges){
-    //   _setFreezePanes();
-    // }
+    if (_excel._freezeChanges) {
+      _setFreezePanes();
+    }
     for (var xmlFile in _excel._xmlFiles.keys) {
       var xml = _excel._xmlFiles[xmlFile].toString();
       // File('$xmlFile')
@@ -263,10 +263,10 @@ class Save {
       //     builder.attribute('activePane', 'topRight');
       //     break;
       //   case _ActivePane.topLeft:
-          builder.attribute('activePane', 'topLeft');
-          // break;
+      builder.attribute('activePane', 'bottomLeft');
+      // break;
       // }
-      builder.attribute('state', 'frozen');
+      builder.attribute('state', 'frozenSplit');
     });
   }
 
@@ -281,14 +281,14 @@ class Save {
         var builder = XmlBuilder();
 
         if (sheetViewsElement != null) {
-          builder.element('sheetViews', nest: () {
-            builder.element('sheetView', nest: () {
-              _savePane(sheetObject, builder);
-            });
+          builder.element('sheetView', nest: () {
+            _savePane(sheetObject, builder);
+            builder.element('selection', attributes: {'pane': 'bottomLeft'});
+            builder.attribute('workbookViewId', '0');
+            builder.attribute('tabSelected', '1');
           });
-
           sheetViewsElement.children.clear();
-          sheetViewsElement.children.addAll(builder.buildFragment().children);
+          sheetViewsElement.children.add(builder.buildFragment().copy());
         }
       }
     });

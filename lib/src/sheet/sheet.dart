@@ -702,8 +702,8 @@ class Sheet {
     _checkMaxRow(startRow);
     _checkMaxRow(endRow);
     _verticalSplit = startColumn;
-    _horizontalSplit = startRow;
-    _topLeftCell = start.cellId;
+    _horizontalSplit = endRow;
+    _topLeftCell = end.cellId;
 
     print('_verticalSplit: $_verticalSplit _horizontalSplit: $_horizontalSplit '
         '_topLeftCell: $_topLeftCell');
