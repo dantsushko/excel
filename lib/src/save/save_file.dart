@@ -617,12 +617,16 @@ class Save {
     if (_excel._rtlChanges) {
       _setRTL();
     }
-    if(creator != null && description != null) {
+    if (creator != null && description != null) {
       _addCoreProps();
     }
     for (var xmlFile in _excel._xmlFiles.keys) {
       var xml = _excel._xmlFiles[xmlFile].toString();
       var content = utf8.encode(xml);
+      if (xmlFile == 'docProps/core.xml') {
+        _excel._archive
+            .addFile(ArchiveFile('docProps/core.xml', content.length, content));
+      }
       _archiveFiles[xmlFile] = ArchiveFile(xmlFile, content.length, content);
     }
     return ZipEncoder().encode(_cloneArchive(_excel._archive, _archiveFiles));
