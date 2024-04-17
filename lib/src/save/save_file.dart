@@ -5,7 +5,9 @@ class Save {
   late Map<String, ArchiveFile> _archiveFiles;
   late List<CellStyle> _innerCellStyle;
   final Parser parser;
-  Save._(this._excel, this.parser) {
+  final String? creator;
+  final String? description;
+  Save._(this._excel, this.parser, {this.creator, this.description}) {
     _archiveFiles = <String, ArchiveFile>{};
     _innerCellStyle = <CellStyle>[];
   }
@@ -488,7 +490,6 @@ class Save {
         })
         .whereNotNull()
         .sorted((a, b) => a.key.compareTo(b.key));
-
     if (customNumberFormats.isNotEmpty) {
       var numFmtsElement = styleSheet
           .findAllElements('numFmts')
@@ -497,9 +498,13 @@ class Save {
       int count;
       if (numFmtsElement == null) {
         numFmtsElement = XmlElement(XmlName('numFmts'));
-        ///FIX: if no default numFormats were added in styles.xml - customNumFormats were added in wrong place, 
-        styleSheet.findElements('styleSheet').first.children
-            .insert(0,numFmtsElement);
+
+        ///FIX: if no default numFormats were added in styles.xml - customNumFormats were added in wrong place,
+        styleSheet
+            .findElements('styleSheet')
+            .first
+            .children
+            .insert(0, numFmtsElement);
         // styleSheet.children.insert(0, numFmtsElement);
       }
       count = int.parse(numFmtsElement.getAttribute('count') ?? '0');
@@ -533,6 +538,68 @@ class Save {
     }
   }
 
+  void _saveCore() {
+    final XmlBuilder builder = XmlBuilder();
+    builder.processing(
+        'xml', 'version="1.0" encoding="UTF-8" standalone="yes"');
+    builder.element('cp:coreProperties', nest: () {
+      builder.attribute('xmlns:cp',
+          'http://schemas.openxmlformats.org/package/2006/metadata/core-properties');
+      builder.attribute('xmlns:dc', 'http://purl.org/dc/elements/1.1/');
+      builder.attribute('xmlns:dcterms', 'http://purl.org/dc/terms/');
+      builder.attribute('xmlns:dcmitype', 'http://purl.org/dc/dcmitype/');
+      builder.attribute(
+          'xmlns:xsi', 'http://www.w3.org/2001/XMLSchema-instance');
+
+      builder.element('cp:keywords', nest: creator);
+
+      builder.element('dc:description', nest: description);
+    });
+    _excel._xmlFiles['docProps/core.xml'] = builder.buildDocument();
+  }
+
+  void _saveTopLevelRelation() {
+    final XmlBuilder builder = XmlBuilder();
+
+    builder.processing('xml', 'version="1.0"');
+    builder.element('Relationships', nest: () {
+      builder.attribute('xmlns',
+          'http://schemas.openxmlformats.org/package/2006/relationships');
+
+      builder.element('Relationship', nest: () {
+        builder.attribute('Id', 'rId1');
+        builder.attribute('Type',
+            'http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument');
+        builder.attribute('Target', 'xl/workbook.xml');
+      });
+
+      builder.element('Relationship', nest: () {
+        builder.attribute('Id', 'rId2');
+        builder.attribute('Type',
+            'http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties');
+        builder.attribute('Target', 'docProps/core.xml');
+      });
+    });
+    _excel._xmlFiles['_rels/.rels'] = builder.buildDocument();
+  }
+
+  _addCoreProps() {
+    var builder = XmlBuilder();
+    builder.element('Override', nest: () {
+      builder.attribute('PartName', '/docProps/core.xml');
+      builder.attribute('ContentType',
+          'application/vnd.openxmlformats-package.core-properties+xml');
+    });
+    _excel._xmlFiles['[Content_Types].xml']
+        ?.findAllElements('Types')
+        .first
+        .children
+        .add(builder.buildFragment());
+
+    _saveCore();
+    _saveTopLevelRelation();
+  }
+
   List<int>? _save() {
     if (_excel._styleChanges) {
       _processStylesFile();
@@ -550,7 +617,9 @@ class Save {
     if (_excel._rtlChanges) {
       _setRTL();
     }
-
+    if(creator != null && description != null) {
+      _addCoreProps();
+    }
     for (var xmlFile in _excel._xmlFiles.keys) {
       var xml = _excel._xmlFiles[xmlFile].toString();
       var content = utf8.encode(xml);

@@ -323,8 +323,8 @@ class Excel {
   ///
   ///It will start setting the edited values of `sheets` into the `files` and then `exports the file`.
   ///
-  List<int>? encode() {
-    Save s = Save._(this, parser);
+  List<int>? encode({String? creator, String? description}) {
+    Save s = Save._(this, parser, creator: creator, description: description);
     return s._save();
   }
 
