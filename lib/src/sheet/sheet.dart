@@ -10,6 +10,7 @@ class Sheet {
   double? _defaultRowHeight;
   Map<int, double> _columnWidths = {};
   Map<int, double> _rowHeights = {};
+  Map<int, int> _rowLevels = {};
   Map<int, bool> _columnAutoFit = {};
   late FastList<String> _spannedItems;
   late List<_Span?> _spanList;
@@ -41,6 +42,7 @@ class Sheet {
       bool? isRTLVal,
       Map<int, double>? columnWidthsVal,
       Map<int, double>? rowHeightsVal,
+      Map<int, int>? rowLevelsVal,
       Map<int, bool>? columnAutoFitVal,
       HeaderFooter? headerFooter}) {
     _excel = excel;
@@ -76,6 +78,10 @@ class Sheet {
     if (rowHeightsVal != null) {
       _rowHeights = Map<int, double>.from(rowHeightsVal);
     }
+    if (rowLevelsVal != null) {
+      _rowLevels = Map<int, int>.from(rowLevelsVal);
+    }
+
     if (columnAutoFitVal != null) {
       _columnAutoFit = Map<int, bool>.from(columnAutoFitVal);
     }
@@ -1151,6 +1157,10 @@ class Sheet {
     return _defaultRowHeight!;
   }
 
+  int? getRowLevel(int rowIndex) {
+    return _rowLevels[rowIndex];
+  }
+
   ///
   /// Set the default column width.
   ///
@@ -1202,6 +1212,12 @@ class Sheet {
     _checkMaxRow(rowIndex);
     if (rowHeight < 0) return;
     _rowHeights[rowIndex] = rowHeight;
+  }
+
+  void setRowLevel(int rowIndex, int rowLevel) {
+    _checkMaxRow(rowIndex);
+    if (rowLevel < 1) return;
+    _rowLevels[rowIndex] = rowLevel;
   }
 
   ///

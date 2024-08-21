@@ -160,14 +160,16 @@ class Save {
   }
 
   /// Create a new row in the sheet.
-  XmlElement _createNewRow(XmlElement table, int rowIndex, double? height) {
+  XmlElement _createNewRow(XmlElement table, int rowIndex, double? height, {int? level}) {
     var row = XmlElement(XmlName('row'), [
       XmlAttribute(XmlName('r'), (rowIndex + 1).toString()),
       if (height != null)
         XmlAttribute(XmlName('ht'), height.toStringAsFixed(2)),
+      if(level != null) XmlAttribute(XmlName('outlineLevel'), level.toString()),
       if (height != null) XmlAttribute(XmlName('customHeight'), '1'),
     ], []);
     table.children.add(row);
+    print(row);
     return row;
   }
 
@@ -704,7 +706,7 @@ class Save {
         continue;
       }
       var foundRow = _createNewRow(
-          _excel._sheets[sheetName]! as XmlElement, rowIndex, height);
+          _excel._sheets[sheetName]! as XmlElement, rowIndex, height, level: sheetObject.getRowLevel(rowIndex));
       for (var columnIndex = 0;
           columnIndex < sheetObject._maxColumns;
           columnIndex++) {
